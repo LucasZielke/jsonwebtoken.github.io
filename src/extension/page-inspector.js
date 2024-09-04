@@ -169,10 +169,22 @@ function getCookies() {
 
 function setupInjectedCode() {
   chrome.runtime.onMessage.addListener(messageHandler);
-
-  chrome.tabs.executeScript({
-    file: 'js/webstorage.js',
-    runAt: "document_idle"
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+  
+    // Check if the URL is a valid page for injection
+    if (tab && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('about:')) {
+      // If the URL is valid, execute the script
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['js/webstorage.js'],
+        injectImmediately: false
+      }, () => {
+        console.log('Script executed.');
+      });
+    } else {
+      console.error('Cannot inject script into this page.');
+    }
   });
 }
 
